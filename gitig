@@ -33,9 +33,20 @@ if [[ -e $IGNORE_OUTPUT_FILE ]]; then
 	exit 1
 fi
 
+# Refresh the cache if it is more than 1-week old
+if [[ -f $CACHED_FILE ]]; then
+	one_w_ago="$(date -d '-1 week' +%s)"
+	file_time="$(date -r "$CACHED_FILE" +%s)"
+	if ((file_time <= one_w_ago)); then
+		print_err "Cached list of templates is expired! Refreshing..."
+		rm "$CACHED_FILE"
+	fi
+fi
+
 # Cache list of gitignore templates
 if [[ ! -f $CACHED_FILE ]]; then
 	curl -sL 'https://gitignore.io/api/list' | tr ',' '\n' > "$CACHED_FILE"
+	print_msg "Refreshed cached list of templates:  " "$CACHED_FILE"
 fi
 
 # Interactive select
@@ -55,5 +66,5 @@ PRETTY_API_TARGET="${API_TARGET//,/,  }"
 curl -sLo "$IGNORE_OUTPUT_FILE" 'https://gitignore.io/api/'"$API_TARGET"
 
 # Print success
-print_msg "Downloaded git-ignore templates:" "$PRETTY_API_TARGET"
-print_msg "To file:                        " "$PRETTY_IGNORE_OUTPUT_FILE"
+print_msg "Downloaded git-ignore templates:     " "$PRETTY_API_TARGET"
+print_msg "To file:                             " "$PRETTY_IGNORE_OUTPUT_FILE"
