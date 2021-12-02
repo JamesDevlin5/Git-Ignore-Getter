@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# Where to place the downloaded gitignore file
+IGNORE_OUTPUT_FILE="$(realpath -m "${1:-"$PWD/.gitignore"}")"
+
+# Where to place the cached list of template types
+CACHED_FILE="${XDG_CACHE_HOME}/gitignore.templates"
+
+# Ensure we're not going to overwrite an existing one;
+# Make the user deal with this.
+if [[ -e $IGNORE_OUTPUT_FILE ]]; then
+	printf "Git-ignore output file already exists! Exiting...\n"
+	exit 1
+fi
+
+# Cache list of gitignore templates
+if [[ ! -f $CACHED_FILE ]]; then
+	curl -sL 'https://gitignore.io/api/list' | tr ',' '\n' > "$CACHED_FILE"
+fi
+
+# Interactive select
+SELECTED="$(fzf --multi --cycle --no-preview < "$CACHED_FILE")"
+
+# Check if nothing was selected (fzf was likely aborted if so)
+if [[ -z $SELECTED ]]; then
+	printf "Did not select any gitignore templates! Exiting...\n"
+	exit 1
+fi
+
+# Format list of templates appropriately for api
+API_TARGET="$(paste -s -d, <<< "${SELECTED[@]}")"
+
+# Download the file from the api
+curl -sLo "$IGNORE_OUTPUT_FILE" 'https://gitignore.io/api/'"$API_TARGET"
+
+# Print success
+printf "Downloaded git-ignore templates for targets: %s\n" "$API_TARGET"
+printf "To file: %s\n" "$IGNORE_OUTPUT_FILE"
