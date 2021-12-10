@@ -13,3 +13,7 @@
 - The fuzzy finder, `fzf`, is used to select templates interactively
 - Will not retrieve an empty gitignore file if no templates are selected
 
+## Sample Usage
+
+[![asciicast](https://asciinema.org/a/455107.svg)](https://asciinema.org/a/455107)
+
